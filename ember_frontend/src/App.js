@@ -56,7 +56,27 @@ function App() {
       <div className="App">
         <header className="App-header" style={{ background: '#0f0f14', color: '#ffeea9' }}>
           <h1 style={{ margin: 0, letterSpacing: 2 }}>EMBER'S LIGHT</h1>
-          <p style={{ color: '#ff9900', marginTop: 8, marginBottom: 24 }}>A Pixel Art Platformer</p>
+          <p style={{ color: '#ff9900', marginTop: 8, marginBottom: 16 }}>A Pixel Art Platformer</p>
+
+          {/* Atmospheric game description */}
+          <div
+            style={{
+              maxWidth: 720,
+              margin: '0 auto',
+              color: '#d6cba3',
+              lineHeight: 1.6,
+              fontSize: 14,
+              textShadow: '0 0 6px rgba(255, 153, 0, 0.15)',
+              opacity: 0.95,
+              padding: '0 16px',
+              marginBottom: 28
+            }}
+          >
+            Play as Ember, the last spark of a flame spirit, exploring a darkened world after a great
+            flood. Rekindle ancient braziers, survive hazards, and restore light to the ruins before
+            your flame fades.
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 240 }}>
             <button className="theme-toggle" onClick={handleStartNew}>Start Game</button>
             <button className="theme-toggle" onClick={handleContinue} disabled={!continueAvailable}>
