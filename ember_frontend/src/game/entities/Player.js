@@ -1,4 +1,4 @@
-//
+﻿//
 // Player.js - Ember player character
 //
 import { clamp, approach } from '../core/MathUtils';
@@ -32,6 +32,11 @@ export default class Player {
       solarMirror: false,
       flameCloak: false,
     };
+
+    // Movement mode:
+    // freeMove enables top-down movement using arrow/WASD keys for all 4 directions.
+    // It harmonizes with platform tiles by still preventing walking through solids.
+    this.freeMove = true;
   }
 
   // PUBLIC_INTERFACE
@@ -43,33 +48,6 @@ export default class Player {
     this.cooldowns.burst = Math.max(0, this.cooldowns.burst - dt);
     this.cooldowns.seed = Math.max(0, this.cooldowns.seed - dt);
 
-    // Base movement
-    const accel = 2200;
-    const maxSpeed = 180 * (this.dimmed ? 0.7 : 1);
-    if (input.isDown('left')) {
-      this.vx = approach(this.vx, -maxSpeed, accel * dt);
-      this.facing = -1;
-    } else if (input.isDown('right')) {
-      this.vx = approach(this.vx, maxSpeed, accel * dt);
-      this.facing = 1;
-    }
-
-    // Jump buffering
-    if (input.wasPressed('jump')) {
-      this.jumpBuffer = 0.12;
-    }
-    if ((this.onGround || this.coyote > 0) && this.jumpBuffer > 0) {
-      this.vy = -420;
-      this.onGround = false;
-      this.coyote = 0;
-      this.jumpBuffer = 0;
-      systems.audio.playSfx('jump');
-    }
-    // Short hop if releasing jump early
-    if (!input.isDown('jump') && this.vy < -160) {
-      this.vy = -160;
-    }
-
     // Dim/stealth
     this.dimmed = input.isDown('dim');
 
@@ -79,6 +57,13 @@ export default class Player {
     }
     if (input.wasPressed('seed') && this.cooldowns.seed === 0) {
       this._fireSeed(world, systems);
+    }
+
+    // Movement and physics
+    if (this.freeMove) {
+      this._updateFreeMove(dt, input, world);
+    } else {
+      this._updatePlatformer(dt, input, world, systems);
     }
 
     // Flame decay and hazards
@@ -97,9 +82,6 @@ export default class Player {
         this.flame = clamp(this.flame - 2 * dt, 0, this.maxFlame);
       }
     };
-
-    // Physics
-    stepPhysics(this, dt, world);
 
     // Interaction with braziers (restore flame)
     for (const b of world.braziers) {
@@ -128,6 +110,114 @@ export default class Player {
       this.vx = 0; this.vy = 0;
       systems.audio.playSfx('hurt');
     }
+  }
+
+  /**
+   * Handle classic platformer movement (kept for harmony with existing mechanics).
+   * Left/Right + Jump + Gravity using stepPhysics.
+   */
+  _updatePlatformer(dt, input, world, systems) {
+    const accel = 2200;
+    const maxSpeed = 180 * (this.dimmed ? 0.7 : 1);
+
+    if (input.isDown('left')) {
+      this.vx = approach(this.vx, -maxSpeed, accel * dt);
+      this.facing = -1;
+    } else if (input.isDown('right')) {
+      this.vx = approach(this.vx, maxSpeed, accel * dt);
+      this.facing = 1;
+    }
+
+    // Jump buffering
+    if (input.wasPressed('jump')) {
+      this.jumpBuffer = 0.12;
+    }
+    if ((this.onGround || this.coyote > 0) && this.jumpBuffer > 0) {
+      this.vy = -420;
+      this.onGround = false;
+      this.coyote = 0;
+      this.jumpBuffer = 0;
+      systems.audio.playSfx('jump');
+    }
+    // Short hop if releasing jump early
+    if (!input.isDown('jump') && this.vy < -160) {
+      this.vy = -160;
+    }
+
+    // Step physics including gravity/collisions
+    stepPhysics(this, dt, world);
+  }
+
+  /**
+   * Handle free directional movement in 4 directions with tile collision.
+   * Gravity is disabled; we integrate custom movement and collision against solids.
+   */
+  _updateFreeMove(dt, input, world) {
+    const accel = 2200;
+    const maxSpeed = 150 * (this.dimmed ? 0.7 : 1); // slightly slower to fit top-down feel
+    const decel = 2400;
+
+    // Desired direction from inputs
+    let dx = 0, dy = 0;
+    if (input.isDown('left'))  dx -= 1;
+    if (input.isDown('right')) dx += 1;
+    if (input.isDown('up'))    dy -= 1;
+    if (input.isDown('down'))  dy += 1;
+
+    // Face based on horizontal first, then vertical if no horizontal
+    if (dx !== 0) this.facing = dx > 0 ? 1 : -1;
+
+    // Normalize diagonal
+    const len = Math.hypot(dx, dy) || 1;
+    dx /= len; dy /= len;
+
+    // Accelerate towards desired velocity
+    const targetVX = dx * maxSpeed;
+    const targetVY = dy * maxSpeed;
+
+    this.vx = approach(this.vx, targetVX, accel * dt);
+    this.vy = approach(this.vy, targetVY, accel * dt);
+
+    // If no input, apply deceleration to rest
+    if (dx === 0) this.vx = approach(this.vx, 0, decel * dt);
+    if (dy === 0) this.vy = approach(this.vy, 0, decel * dt);
+
+    // Integrate intended movement with per-axis collision resolution
+    const tiles = world.tiles;
+    const nextX = this.x + this.vx * dt;
+    const nextY = this.y + this.vy * dt;
+
+    // Horizontal collision
+    if (collidesWithTiles(nextX, this.y, this.w, this.h, tiles)) {
+      // step pixel by pixel to edge
+      const step = Math.sign(this.vx) || 1;
+      let testX = this.x;
+      while (!collidesWithTiles(testX + step, this.y, this.w, this.h, tiles)) {
+        testX += step;
+        if (Math.abs(testX - nextX) < 1) break;
+      }
+      this.x = testX;
+      this.vx = 0;
+    } else {
+      this.x = nextX;
+    }
+
+    // Vertical collision
+    if (collidesWithTiles(this.x, nextY, this.w, this.h, tiles)) {
+      const step = Math.sign(this.vy) || 1;
+      let testY = this.y;
+      while (!collidesWithTiles(this.x, testY + step, this.w, this.h, tiles)) {
+        testY += step;
+        if (Math.abs(testY - nextY) < 1) break;
+      }
+      this.y = testY;
+      this.vy = 0;
+    } else {
+      this.y = nextY;
+    }
+
+    // In freeMove, we conceptually aren't "onGround"
+    this.onGround = false;
   }
 
   _applyFlameDecay(dt, world) {
