@@ -61,7 +61,8 @@ export default function Game() {
       },
       settings: {
         audio: true,
-        darkness: 0.8
+        // Lower default darkness (higher brightness). Users can still tweak via Settings.
+        darkness: 0.6
       }
     };
   });
@@ -208,7 +209,7 @@ export default function Game() {
     const lights = [
       ...player.getLightSources(cam),
       ...world.braziers.filter(b => b.lit).map(b => ({
-        x: Math.floor(b.x - cam.x + 5), y: Math.floor(b.y - cam.y + 2), r: 50, strength: 0.75, color: 'rgba(255,210,150,0.06)'
+        x: Math.floor(b.x - cam.x + 5), y: Math.floor(b.y - cam.y + 2), r: 50, strength: 0.78, color: 'rgba(255,210,150,0.10)'
       }))
     ];
     renderLighting(ctx, cam.w, cam.h, lights, state.settings.darkness);

@@ -214,7 +214,8 @@ export default class Player {
         y: Math.floor(this.y - camera.y + this.h / 2),
         r: baseR,
         strength,
-        color: this.dimmed ? 'rgba(255,190,120,0.05)' : 'rgba(255,220,160,0.08)'
+        // Slightly stronger glow when not dimmed to remain readable with brighter ambient
+        color: this.dimmed ? 'rgba(255,190,120,0.06)' : 'rgba(255,220,160,0.10)'
       }
     ];
   }
