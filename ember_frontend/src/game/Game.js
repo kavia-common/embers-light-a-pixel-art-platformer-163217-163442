@@ -13,7 +13,7 @@ import { renderTiles, renderBraziers } from './render/Renderer';
 import { saveGame, loadGame } from './core/Storage';
 
 // PUBLIC_INTERFACE
-export default function Game() {
+export default function Game({ onReturnToMenu }) {
   /**
    * Game component - sets up canvas rendering and runs the loop.
    * Provides overlay UI and menus.
@@ -243,6 +243,7 @@ export default function Game() {
         state={state}
         onToggleUpgrade={handleToggleUpgrade}
         onSettingsChange={handleSettingsChange}
+        onReturnToMenu={onReturnToMenu}
       />
     </div>
   );
@@ -264,7 +265,7 @@ export function HUD({ state }) {
 }
 
 // PUBLIC_INTERFACE
-export function Menus({ ui, setUi, state, onToggleUpgrade, onSettingsChange }) {
+export function Menus({ ui, setUi, state, onToggleUpgrade, onSettingsChange, onReturnToMenu }) {
   /** Pause, Map, Upgrade, and Settings menus. */
   const { PauseMenu, MapMenu, UpgradeMenu, SettingsMenu } = require('./ui/OverlayUI');
   return (
@@ -273,7 +274,11 @@ export function Menus({ ui, setUi, state, onToggleUpgrade, onSettingsChange }) {
         show={ui.pause}
         onResume={() => setUi(u => ({ ...u, pause: false }))}
         onSettings={() => setUi(u => ({ ...u, settings: true }))}
-        onQuit={() => window.location.reload()}
+        onQuit={() => {
+          // Prefer callback to return to main menu if provided; fallback to reload.
+          if (typeof onReturnToMenu === 'function') onReturnToMenu();
+          else window.location.reload();
+        }}
       />
       <MapMenu show={ui.map} world={state.world} onClose={() => setUi(u => ({ ...u, map: false }))} />
       <UpgradeMenu show={ui.upgrades} upgrades={state.player.upgrades}

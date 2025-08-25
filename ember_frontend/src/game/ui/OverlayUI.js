@@ -88,7 +88,12 @@ export function MiniMap({ world, camera, scale = 2 }) {
 
 // PUBLIC_INTERFACE
 export function PauseMenu({ show, onResume, onSettings, onQuit }) {
-  /** Pause modal. */
+  /** Pause modal.
+   * Buttons:
+   * - Resume: closes pause
+   * - Settings: opens in-game settings modal
+   * - Quit to Title: triggers onQuit (App handles returning to Main Menu)
+   */
   if (!show) return null;
   return (
     <div style={modalStyle}>
