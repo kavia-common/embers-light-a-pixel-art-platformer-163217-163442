@@ -1,49 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import React, { useState } from 'react';
 import './App.css';
+import Game from './game/Game';
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
+  /** Root app renders a title screen then the game in fullscreen. */
+  const [started, setStarted] = useState(true); // auto-start for CI env; could gate behind title screen
 
-  // Effect to apply theme to document element
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+  if (!started) {
+    return (
+      <div className="App">
+        <header className="App-header" style={{ background: '#0f0f14', color: '#ffeea9' }}>
+          <h1 style={{ margin: 0, letterSpacing: 2 }}>EMBER'S LIGHT</h1>
+          <p style={{ color: '#ff9900' }}>A Pixel Art Platformer</p>
+          <button className="theme-toggle" onClick={() => setStarted(true)}>Begin</button>
+        </header>
+      </div>
+    );
+  }
 
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
-
-  return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  return <Game />;
 }
 
 export default App;
