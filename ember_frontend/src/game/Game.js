@@ -51,6 +51,8 @@ export class Game {
     this.inventory = new Inventory();
     this.upgrades = new Upgrades();
     this.player = new Player(this.world, this.input, this.inventory, this.upgrades);
+    // Track whether we've already centered/spawned the player; used to center only at startup
+    this._spawnedCentered = false;
     this.hazards = new HazardSystem(this.world);
     this.combat = new CombatSystem(this.world, this.player, this.audio);
     this.puzzles = new PuzzleSystem(this.world, this.player);
@@ -60,6 +62,15 @@ export class Game {
     this._onResize = this.onResize.bind(this);
     window.addEventListener('resize', this._onResize);
     this.onResize();
+
+    // After initial sizing, center player spawn at view center
+    if (!this._spawnedCentered) {
+      const cx = this.renderer.viewW / 2;
+      const cy = this.renderer.viewH / 2;
+      this.player.pos.x = cx;
+      this.player.pos.y = cy;
+      this._spawnedCentered = true;
+    }
 
     // Music
     this.audio.init().then(() => {
@@ -79,6 +90,15 @@ export class Game {
     this.renderer.setPixelScale(pixelScale);
     this.canvas.width = Math.floor(w / pixelScale) * pixelScale;
     this.canvas.height = Math.floor(h / pixelScale) * pixelScale;
+
+    // If we haven't spawned yet, center the player based on current view size
+    if (!this._spawnedCentered && this.player) {
+      const cx = this.renderer.viewW / 2;
+      const cy = this.renderer.viewH / 2;
+      this.player.pos.x = cx;
+      this.player.pos.y = cy;
+      this._spawnedCentered = true;
+    }
   }
 
   setPaused(v) {

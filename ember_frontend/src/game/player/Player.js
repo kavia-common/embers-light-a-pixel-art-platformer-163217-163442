@@ -7,7 +7,8 @@ export class Player {
     this.inventory = inventory;
     this.upgrades = upgrades;
 
-    this.pos = { x: 100, y: 100 };
+    // Initial position will be set by Game during initialization (center of view)
+    this.pos = { x: 0, y: 0 };
     this.vel = { x: 0, y: 0 };
     this.hw = 5; // half width
     this.hh = 7; // half height
