@@ -36,11 +36,16 @@ export class Player {
   }
 
   update(dt, { inputBlocked }) {
-    // Movement input
-    const acc = this.moveSpeed * (this.upgrades.has('flame_cloak') ? 1.1 : 1.0);
+    // Movement input (horizontal)
+    // Keep player visually centered; treat input as desired horizontal movement.
+    // We set a target horizontal velocity but final position update/collision occurs in Physics.
+    const speed = this.moveSpeed * (this.upgrades.has('flame_cloak') ? 1.1 : 1.0);
     if (!inputBlocked) {
-      if (this.input.left) this.vel.x = -acc;
-      else if (this.input.right) this.vel.x = acc;
+      if (this.input.left) this.vel.x = -speed;
+      else if (this.input.right) this.vel.x = speed;
+      else this.vel.x = 0;
+    } else {
+      this.vel.x = 0;
     }
 
     // Jump

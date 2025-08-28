@@ -63,12 +63,11 @@ export class Game {
     window.addEventListener('resize', this._onResize);
     this.onResize();
 
-    // After initial sizing, center player spawn at view center
+    // After initial sizing, center player spawn at view center (visual)
     if (!this._spawnedCentered) {
-      const cx = this.renderer.viewW / 2;
-      const cy = this.renderer.viewH / 2;
-      this.player.pos.x = cx;
-      this.player.pos.y = cy;
+      // Keep player's world position but initialize camera to center on player
+      this.renderer.camera.x = this.player.pos.x - this.renderer.viewW / 2;
+      this.renderer.camera.y = this.player.pos.y - this.renderer.viewH / 2;
       this._spawnedCentered = true;
     }
 
@@ -91,12 +90,10 @@ export class Game {
     this.canvas.width = Math.floor(w / pixelScale) * pixelScale;
     this.canvas.height = Math.floor(h / pixelScale) * pixelScale;
 
-    // If we haven't spawned yet, center the player based on current view size
+    // If we haven't spawned yet, align camera to center the player
     if (!this._spawnedCentered && this.player) {
-      const cx = this.renderer.viewW / 2;
-      const cy = this.renderer.viewH / 2;
-      this.player.pos.x = cx;
-      this.player.pos.y = cy;
+      this.renderer.camera.x = this.player.pos.x - this.renderer.viewW / 2;
+      this.renderer.camera.y = this.player.pos.y - this.renderer.viewH / 2;
       this._spawnedCentered = true;
     }
   }
@@ -182,7 +179,7 @@ export class Game {
   }
 
   _update(dt) {
-    // Camera follows player
+    // Camera follows player; player remains visually centered
     this.renderer.camera.x = this.player.pos.x - this.renderer.viewW / 2;
     this.renderer.camera.y = this.player.pos.y - this.renderer.viewH / 2;
   }
