@@ -1,9 +1,17 @@
 //
+//
 // Entities.js - other simple entities: motes and seeds
 //
 import { TILE } from '../core/Physics';
 
+// Simple AABB overlap test
+function aabb(ax, ay, aw, ah, bx, by, bw, bh) {
+  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+}
+
+// PUBLIC_INTERFACE
 export function createMote(x, y) {
+  /** Create a simple enemy that seeks the player and deals contact damage. */
   return {
     type: 'mote',
     x, y,
@@ -11,8 +19,13 @@ export function createMote(x, y) {
     vx: 0, vy: 0,
     hp: 60,
     aiTime: 0,
+    contactDamage: 8,        // damage per hit
+    contactCooldown: 0.6,    // seconds between damage ticks on same target
+    _contactTimer: 0,        // internal timer
+
     update(dt, player) {
       this.aiTime += dt;
+
       // float towards player slowly, avoid light if player is bright
       const speed = player.dimmed ? 60 : 40;
       const dx = player.x - this.x;
@@ -22,7 +35,20 @@ export function createMote(x, y) {
       this.vy = (dy / len) * speed * 0.4 + Math.sin(this.aiTime * 3) * 10;
       this.x += this.vx * dt;
       this.y += this.vy * dt;
+
+      // Handle contact damage with a small cooldown so it doesn't strobe each frame
+      if (this._contactTimer > 0) this._contactTimer -= dt;
+      if (aabb(this.x, this.y, this.w, this.h, player.x, player.y, player.w, player.h)) {
+        if (this._contactTimer <= 0) {
+          // Ask player to take damage (it will handle its own i-frames)
+          if (typeof player.takeDamage === 'function') {
+            player.takeDamage(this.contactDamage, { source: 'mote', knockback: { x: Math.sign(dx), y: -0.4 } });
+          }
+          this._contactTimer = this.contactCooldown;
+        }
+      }
     },
+
     render(ctx, camera) {
       ctx.save();
       ctx.translate(-camera.x, -camera.y);
@@ -33,7 +59,9 @@ export function createMote(x, y) {
   };
 }
 
+// PUBLIC_INTERFACE
 export function createSeed(p) {
+  /** Flame seed projectile to ignite objects. */
   const ent = {
     type: 'seed',
     x: p.x, y: p.y,

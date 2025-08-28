@@ -257,7 +257,7 @@ export function HUD({ state }) {
   return (
     <>
       <FlameBar flame={player.flame} maxFlame={player.maxFlame} />
-      <HealthBar health={player.health} maxHealth={player.maxHealth} />
+      <HealthBar health={player.health} maxHealth={player.maxHealth} recentDamageTime={player.recentDamageTime || 0} />
       <InventoryPanel inventory={inventory} />
       <MiniMap world={world} camera={world.camera} />
     </>

@@ -1,7 +1,7 @@
-//
+﻿//
 // OverlayUI.js - in-game overlay HUD and simple menus
 //
-import React from 'react';
+import React, { useMemo } from 'react';
 
 // PUBLIC_INTERFACE
 export function FlameBar({ flame, maxFlame, colorPrimary = '#ff9900', colorAccent = '#ffeea9' }) {
@@ -25,15 +25,30 @@ export function FlameBar({ flame, maxFlame, colorPrimary = '#ff9900', colorAccen
 }
 
 // PUBLIC_INTERFACE
-export function HealthBar({ health, maxHealth }) {
-  /** Health bar HUD. */
+export function HealthBar({ health, maxHealth, recentDamageTime = 0 }) {
+  /** Health bar HUD with subtle pulse feedback when recently damaged. */
   const pct = Math.max(0, Math.min(1, health / maxHealth));
   const width = 180, height = 10, inner = Math.round(pct * (width - 2));
+
+  // When damaged very recently, show a light red overlay behind the green bar
+  const damageAlpha = useMemo(() => {
+    if (recentDamageTime <= 0) return 0;
+    // quick fade from 0.35 -> 0
+    const t = Math.max(0, Math.min(1, recentDamageTime / 0.3));
+    return 0.35 * t;
+  }, [recentDamageTime]);
+
   return (
     <div style={{ position: 'absolute', top: 40, left: 10 }}>
       <div style={{ fontSize: 12, marginBottom: 4, color: '#fff', fontFamily: 'monospace' }}>Health</div>
-      <div style={{ width, height, border: '2px solid var(--border-color)', background: 'var(--border-color)' }}>
-        <div style={{ width: inner, height: height - 2, background: '#8af26a' }} />
+      <div style={{ position: 'relative', width, height, border: '2px solid var(--border-color)', background: 'var(--border-color)' }}>
+        {damageAlpha > 0 && (
+          <div style={{
+            position: 'absolute', left: 1, top: 1,
+            width: inner, height: height - 2, background: `rgba(250, 66, 66, ${damageAlpha})`
+          }} />
+        )}
+        <div style={{ position: 'relative', width: inner, height: height - 2, background: '#8af26a' }} />
       </div>
     </div>
   );

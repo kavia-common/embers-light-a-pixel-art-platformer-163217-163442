@@ -23,6 +23,12 @@ export default class Player {
     this.maxHealth = 100;
     this.health = 100;
 
+    // Damage and invulnerability state
+    this.invulnTime = 0;          // seconds remaining of invulnerability frames
+    this.invulnDuration = 0.5;    // default i-frame duration after taking a hit
+    this.recentDamageTime = 0;    // timer to drive UI feedback + blink
+    this._hurtBlink = false;
+
     // States
     this.dimmed = false; // stealth
     this.ignitedObjects = new Set();
@@ -47,6 +53,8 @@ export default class Player {
     this.jumpBuffer = Math.max(0, this.jumpBuffer - dt);
     this.cooldowns.burst = Math.max(0, this.cooldowns.burst - dt);
     this.cooldowns.seed = Math.max(0, this.cooldowns.seed - dt);
+    if (this.invulnTime > 0) this.invulnTime = Math.max(0, this.invulnTime - dt);
+    if (this.recentDamageTime > 0) this.recentDamageTime = Math.max(0, this.recentDamageTime - dt);
 
     // Dim/stealth
     this.dimmed = input.isDown('dim');
@@ -277,18 +285,43 @@ export default class Player {
   }
 
   // PUBLIC_INTERFACE
+  takeDamage(amount, opts = {}) {
+    /** Apply damage to the player with brief invulnerability and optional knockback. */
+    if (this.invulnTime > 0) return; // ignore during i-frames
+    const dmg = Math.max(0, Math.floor(amount));
+    this.health = clamp(this.health - dmg, 0, this.maxHealth);
+    this.invulnTime = this.invulnDuration;
+    this.recentDamageTime = 0.3; // drive UI pulse
+    // Simple knockback (works in both free and platformer)
+    if (opts.knockback) {
+      const kb = opts.knockback;
+      this.vx += (kb.x || 0) * 120;
+      this.vy += (kb.y || 0) * 160;
+    }
+    // Optional: reduce flame slightly on hit to emphasize danger
+    this.flame = clamp(this.flame - 2, 0, this.maxFlame);
+  }
+
+  // PUBLIC_INTERFACE
   render(ctx, camera) {
     /** Draw Ember as a simple pixel character. */
     ctx.save();
     ctx.translate(-camera.x, -camera.y);
 
+    // Blink when invulnerable
+    const blinking = this.invulnTime > 0 && Math.floor(this.invulnTime * 20) % 2 === 0;
+
     // Body
     ctx.fillStyle = this.dimmed ? '#e08612' : '#ff9900';
-    ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.w, this.h);
+    if (!blinking) {
+      ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.w, this.h);
+    }
 
     // Face glow
-    ctx.fillStyle = '#fff2bf';
-    ctx.fillRect(Math.floor(this.x + (this.facing > 0 ? 6 : 2)), Math.floor(this.y + 4), 2, 2);
+    if (!blinking) {
+      ctx.fillStyle = '#fff2bf';
+      ctx.fillRect(Math.floor(this.x + (this.facing > 0 ? 6 : 2)), Math.floor(this.y + 4), 2, 2);
+    }
 
     ctx.restore();
   }
