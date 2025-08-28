@@ -1,82 +1,45 @@
-# Lightweight React Template for KAVIA
+# Ember Frontend
 
-This project provides a minimal React template with a clean, modern UI and minimal dependencies.
+A modern-retro pixel art platformer frontend built with React and Canvas.
 
-## Features
+Features:
+- Fullscreen pixel art rendering with dynamic lighting mask
+- Platforming controls and physics
+- Light-as-life (flame) mechanic with decay and restoration near lit braziers
+- Environmental hazards: rain, wind, darkness
+- Stealth (dimming) system
+- Tactical combat: Flame Burst, Fire Seeds, object ignition
+- Puzzle hooks: mirrors and solar beams
+- Progression upgrades UI (Everbright Coal, Solar Mirror, Flame Cloak)
+- World map overlay
+- Ambient audio and effects (WebAudio)
+- Local save/load
 
-- **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
-- **Modern UI**: Clean, responsive design with KAVIA brand styling
-- **Fast**: Minimal dependencies for quick loading times
-- **Simple**: Easy to understand and modify
+Controls:
+- Move: Arrow Keys / A D
+- Jump: Space / K
+- Flame Burst: J / F
+- Fire Seed: L
+- Dim / Stealth: Shift
+- Pause: Esc
+- World Map: M
+- Upgrades: U
+- Save / Load: F5 / F9
 
-## Getting Started
+Project Structure:
+- src/game
+  - core: Input, Physics
+  - render: Renderer, LightingSystem
+  - sound: AudioManager
+  - world: World (tiles, braziers, mirrors, ignitables)
+  - player: Player, Inventory, Upgrades
+  - systems: HazardSystem, CombatSystem, PuzzleSystem, StealthSystem
+  - utils: helpers
+- src/ui: overlay components for HUD, Map, Upgrades, Pause
+- src/state: save/load
 
-In the project directory, you can run:
+Run:
+- npm start
 
-### `npm start`
-
-Runs the app in development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-### `npm test`
-
-Launches the test runner in interactive watch mode.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-## Customization
-
-### Colors
-
-The main brand colors are defined as CSS variables in `src/App.css`:
-
-```css
-:root {
-  --kavia-orange: #E87A41;
-  --kavia-dark: #1A1A1A;
-  --text-color: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --border-color: rgba(255, 255, 255, 0.1);
-}
-```
-
-### Components
-
-This template uses pure HTML/CSS components instead of a UI framework. You can find component styles in `src/App.css`. 
-
-Common components include:
-- Buttons (`.btn`, `.btn-large`)
-- Container (`.container`)
-- Navigation (`.navbar`)
-- Typography (`.title`, `.subtitle`, `.description`)
-
-## Learn More
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Build:
+- npm run build
