@@ -49,7 +49,17 @@ export class LightingSystem {
       const [sx, sy] = this.r.worldToScreen(l.x, l.y);
       const r = l.radius * pixelScale * 0.6;
       const g = this.bctx.createRadialGradient(sx, sy, 0, sx, sy, r);
-      g.addColorStop(0, l.color.replace('1)', '0.7)').replace('rgb', 'rgba'));
+      // Ensure color is valid rgba: if input is rgb(...), convert to rgba(..., alpha),
+      // if already rgba(...), just adjust the alpha component to 0.7 safely.
+      let centerColor = l.color;
+      if (centerColor.startsWith('rgb(')) {
+        // convert 'rgb(r,g,b)' to 'rgba(r,g,b,0.7)'
+        centerColor = centerColor.replace(/^rgb\(([^)]+)\)$/, 'rgba($1,0.7)');
+      } else if (centerColor.startsWith('rgba(')) {
+        // replace the trailing alpha with 0.7
+        centerColor = centerColor.replace(/^rgba\((\s*\d+\s*,\s*\d+\s*,\s*\d+)\s*,\s*([0-9]*\.?[0-9]+)\s*\)$/, 'rgba($1,0.7)');
+      }
+      g.addColorStop(0, centerColor);
       g.addColorStop(1, 'rgba(0,0,0,0)');
       this.bctx.fillStyle = g;
       this.bctx.beginPath();
