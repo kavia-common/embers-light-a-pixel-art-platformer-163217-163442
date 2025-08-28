@@ -1,6 +1,6 @@
 //
 //
-// Entities.js - other simple entities: motes and seeds
+// Entities.js - other simple entities: motes and seeds (compatible with melee/knockback)
 //
 import { TILE } from '../core/Physics';
 
@@ -11,7 +11,7 @@ function aabb(ax, ay, aw, ah, bx, by, bw, bh) {
 
 // PUBLIC_INTERFACE
 export function createMote(x, y) {
-  /** Create a simple enemy that seeks the player and deals contact damage. */
+  /** Create a simple enemy that seeks the player, can be hit/knocked back, and deals contact damage. */
   return {
     type: 'mote',
     x, y,
@@ -19,28 +19,33 @@ export function createMote(x, y) {
     vx: 0, vy: 0,
     hp: 60,
     aiTime: 0,
-    contactDamage: 8,        // damage per hit
-    contactCooldown: 0.6,    // seconds between damage ticks on same target
-    _contactTimer: 0,        // internal timer
+    contactDamage: 8,
+    contactCooldown: 0.6,
+    _contactTimer: 0,
 
     update(dt, player) {
       this.aiTime += dt;
+
+      // simple damping to settle knockback
+      this.vx *= 0.98;
+      this.vy *= 0.98;
 
       // float towards player slowly, avoid light if player is bright
       const speed = player.dimmed ? 60 : 40;
       const dx = player.x - this.x;
       const dy = player.y - this.y;
       const len = Math.hypot(dx, dy) || 1;
-      this.vx = (dx / len) * speed;
-      this.vy = (dy / len) * speed * 0.4 + Math.sin(this.aiTime * 3) * 10;
+      // steer a little rather than fully override to allow knockback
+      this.vx += ((dx / len) * speed - this.vx) * 0.05;
+      this.vy += (((dy / len) * speed * 0.4 + Math.sin(this.aiTime * 3) * 10) - this.vy) * 0.05;
+
       this.x += this.vx * dt;
       this.y += this.vy * dt;
 
-      // Handle contact damage with a small cooldown so it doesn't strobe each frame
+      // Handle contact damage with a small cooldown
       if (this._contactTimer > 0) this._contactTimer -= dt;
       if (aabb(this.x, this.y, this.w, this.h, player.x, player.y, player.w, player.h)) {
         if (this._contactTimer <= 0) {
-          // Ask player to take damage (it will handle its own i-frames)
           if (typeof player.takeDamage === 'function') {
             player.takeDamage(this.contactDamage, { source: 'mote', knockback: { x: Math.sign(dx), y: -0.4 } });
           }
@@ -52,7 +57,9 @@ export function createMote(x, y) {
     render(ctx, camera) {
       ctx.save();
       ctx.translate(-camera.x, -camera.y);
-      ctx.fillStyle = '#202634';
+      // tint darker when low hp
+      const hpPct = Math.max(0, Math.min(1, this.hp / 60));
+      ctx.fillStyle = hpPct < 0.35 ? '#2b3347' : '#202634';
       ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.w, this.h);
       ctx.restore();
     }
