@@ -11,14 +11,14 @@ function ControlRow({ label, value }) {
   /** Renders a single label/value pair for key bindings on the main menu. */
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
-      <span style={{ color: '#d6cba3', textAlign: 'left' }}>{label}</span>
+      <span style={{ color: '#fff6d6', textAlign: 'left' }}>{label}</span>
       <span
         style={{
-          color: '#0f0f14',
+          color: '#1b1b22',
           background: '#ffb84d',
           padding: '2px 8px',
           borderRadius: 4,
-          border: '1px solid #2e2d32',
+          border: '1px solid var(--border-color)',
           boxShadow: '0 1px 0 rgba(0,0,0,0.3) inset',
           fontWeight: 700
         }}
@@ -80,7 +80,7 @@ function App() {
   if (screen === 'menu') {
     return (
       <div className="App">
-        <header className="App-header" style={{ background: '#0f0f14', color: '#ffeea9' }}>
+        <header className="App-header" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
           <h1 style={{ margin: 0, letterSpacing: 2 }}>EMBER'S LIGHT</h1>
           <p style={{ color: '#ff9900', marginTop: 8, marginBottom: 16 }}>A Pixel Art Platformer</p>
 
@@ -89,11 +89,11 @@ function App() {
             style={{
               maxWidth: 720,
               margin: '0 auto',
-              color: '#d6cba3',
+              color: '#fff6d6',
               lineHeight: 1.6,
               fontSize: 14,
-              textShadow: '0 0 6px rgba(255, 153, 0, 0.15)',
-              opacity: 0.95,
+              textShadow: '0 0 8px rgba(255, 153, 0, 0.25)',
+              opacity: 0.98,
               padding: '0 16px',
               marginBottom: 20
             }}
@@ -111,11 +111,11 @@ function App() {
               gridTemplateColumns: 'repeat(2, minmax(180px, 1fr))',
               gap: 10,
               padding: '12px 14px',
-              border: '2px solid #2e2d32',
-              background: '#15141acc',
-              boxShadow: '0 0 12px rgba(255,153,0,0.08) inset',
+              border: '2px solid var(--border-color)',
+              background: 'rgba(29, 34, 48, 0.85)',
+              boxShadow: '0 0 16px rgba(255,153,0,0.12) inset, 0 4px 18px rgba(255,153,0,0.08)',
               borderRadius: 6,
-              color: '#ffeea9',
+              color: 'var(--text-secondary)',
               width: 'min(720px, 92vw)',
               margin: '0 auto 22px',
               fontSize: 13
@@ -153,7 +153,7 @@ function App() {
     // A very lightweight settings screen for menu context only.
     return (
       <div className="App">
-        <header className="App-header" style={{ background: '#0f0f14', color: '#ffeea9' }}>
+        <header className="App-header" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
           <h2 style={{ margin: 0, letterSpacing: 2 }}>Settings</h2>
           <p style={{ color: '#ff9900', marginTop: 8, marginBottom: 24 }}>Adjust options in-game from Pause</p>
           <button className="theme-toggle" onClick={handleCloseSettings}>Back</button>

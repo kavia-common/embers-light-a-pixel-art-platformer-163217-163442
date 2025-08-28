@@ -4,7 +4,7 @@
 import { clamp } from './MathUtils';
 
 // PUBLIC_INTERFACE
-export function renderLighting(ctx, width, height, lightSources, darkness = 0.6) {
+export function renderLighting(ctx, width, height, lightSources, darkness = 0.55) {
   /**
    * Renders a darkness overlay with additive radial lights.
    * lightSources: [{ x, y, r, strength, color }]
@@ -34,14 +34,14 @@ export function renderLighting(ctx, width, height, lightSources, darkness = 0.6)
   ctx.globalCompositeOperation = 'destination-out';
   for (let i = 0; i < lightSources.length; i += 1) {
     const l = lightSources[i] || {};
-    const strength = typeof l.strength === 'number' ? l.strength : 0.8;
-    const innerAlpha = Math.max(0, 1 - strength); // strong lights remove more darkness
+    const strength = typeof l.strength === 'number' ? l.strength : 0.82;
+    const innerAlpha = Math.max(0, 1 - strength);
     const r = l.r || 0;
 
     const grd = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, r);
-    // Slightly softer falloff near the inner radius to make areas feel brighter
-    grd.addColorStop(0.0, `rgba(0,0,0,${innerAlpha})`);
-    grd.addColorStop(0.7, 'rgba(0,0,0,0.85)');
+    // Brighter core and softer falloff to reduce harsh darkness rings
+    grd.addColorStop(0.0, `rgba(0,0,0,${innerAlpha * 0.85})`);
+    grd.addColorStop(0.65, 'rgba(0,0,0,0.8)');
     grd.addColorStop(1.0, 'rgba(0,0,0,1)');
     ctx.fillStyle = grd;
     ctx.beginPath();
@@ -54,8 +54,8 @@ export function renderLighting(ctx, width, height, lightSources, darkness = 0.6)
   for (let i = 0; i < lightSources.length; i += 1) {
     const l = lightSources[i] || {};
     // Slightly stronger default bloom and a bit larger radius to lift midtones
-    const bloomColor = l.color || 'rgba(255,210,150,0.10)';
-    const bloomRadius = (l.r || 0) * 0.78;
+    const bloomColor = l.color || 'rgba(255,220,170,0.12)';
+    const bloomRadius = (l.r || 0) * 0.8;
     ctx.fillStyle = bloomColor;
     ctx.beginPath();
     ctx.arc(l.x, l.y, bloomRadius, 0, Math.PI * 2);

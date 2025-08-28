@@ -283,11 +283,11 @@ export default class Player {
     ctx.translate(-camera.x, -camera.y);
 
     // Body
-    ctx.fillStyle = this.dimmed ? '#cc7a00' : '#ff9900';
+    ctx.fillStyle = this.dimmed ? '#e08612' : '#ff9900';
     ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.w, this.h);
 
     // Face glow
-    ctx.fillStyle = '#ffeea9';
+    ctx.fillStyle = '#fff2bf';
     ctx.fillRect(Math.floor(this.x + (this.facing > 0 ? 6 : 2)), Math.floor(this.y + 4), 2, 2);
 
     ctx.restore();

@@ -1,28 +1,30 @@
 /* CSS Variables for Theme Management */
 :root {
-  --bg-primary: #0f0f14;
-  --bg-secondary: #1c1b20;
+  /* Brighter, lighter theme baseline */
+  --bg-primary: #141821;       /* was #0f0f14 */
+  --bg-secondary: #1d2230;     /* was #1c1b20 */
   --text-primary: #ffffff;
-  --text-secondary: #ffeea9;
-  --border-color: #2e2d32;
-  --button-bg: #ff9900;
-  --button-text: #2e2d32;
+  --text-secondary: #ffeea9;   /* accent */
+  --border-color: #3a3a45;     /* was #2e2d32, slightly lighter for contrast */
+  --button-bg: #ff9900;        /* primary */
+  --button-text: #2e2d32;      /* secondary (dark label on bright button) */
 }
 
 [data-theme="dark"] {
-  --bg-primary: #0b0b10;
-  --bg-secondary: #15141a;
+  /* Even in dark, keep things brighter than before */
+  --bg-primary: #121725;       /* was #0b0b10 */
+  --bg-secondary: #1a1f2c;     /* was #15141a */
   --text-primary: #ffffff;
   --text-secondary: #ffeea9;
-  --border-color: #2e2d32;
-  --button-bg: #e08700;
+  --border-color: #3f3f4a;     /* brighten borders slightly */
+  --button-bg: #ff9900;
   --button-text: #2e2d32;
 }
 
 html, body, #root {
   width: 100%;
   height: 100%;
-  background: #0f0f14;
+  background: var(--bg-primary);
 }
 
 .App {
@@ -54,13 +56,13 @@ html, body, #root {
   border-radius: 8px;
   padding: 10px 20px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 3px 10px rgba(255,153,0,0.25), 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.theme-toggle:hover { transform: translateY(-2px); }
+.theme-toggle:hover { transform: translateY(-2px); filter: brightness(1.1); }
 .theme-toggle:active { transform: translateY(0); }
 
 canvas { image-rendering: pixelated; }

@@ -26,7 +26,7 @@ export function createMote(x, y) {
     render(ctx, camera) {
       ctx.save();
       ctx.translate(-camera.x, -camera.y);
-      ctx.fillStyle = '#0d0d12';
+      ctx.fillStyle = '#202634';
       ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.w, this.h);
       ctx.restore();
     }
@@ -59,7 +59,7 @@ export function createSeed(p) {
     render(ctx, camera) {
       ctx.save();
       ctx.translate(-camera.x, -camera.y);
-      ctx.fillStyle = '#ffeea9';
+      ctx.fillStyle = '#fff2bf';
       ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.w, this.h);
       ctx.restore();
     }

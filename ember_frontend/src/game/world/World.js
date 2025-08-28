@@ -34,8 +34,8 @@ function genDemoMap() {
     data,
     solid: [1],
     palette: {
-      0: '#1f1f26',
-      1: '#2e2d32'
+      0: '#242a38',  /* sky/empty - brighter than before */
+      1: '#3a3a45'   /* solid - lighter than previous dark stone */
     }
   };
 }
@@ -48,7 +48,7 @@ export function createInitialWorld() {
     // Wind corridor
     { type: 'wind', x: 40 * TILE, y: 0, w: 8 * TILE, h: 40 * TILE, forceX: -600, forceY: 0 },
     // Darkness basin
-    { type: 'darkness', x: 0, y: 0, w: tiles.width * TILE, h: tiles.height * TILE, intensity: 0.6 },
+    { type: 'darkness', x: 0, y: 0, w: tiles.width * TILE, h: tiles.height * TILE, intensity: 0.55 },
   ];
 
   const braziers = [

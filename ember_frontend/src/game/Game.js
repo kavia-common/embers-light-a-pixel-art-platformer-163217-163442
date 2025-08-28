@@ -119,7 +119,7 @@ export default function Game({ onReturnToMenu }) {
     canvas.style.width = `${vw}px`;
     canvas.style.height = `${vh}px`;
     canvas.style.imageRendering = 'pixelated';
-    canvas.style.background = '#0f0f14';
+    canvas.style.background = 'var(--bg-primary)';
   }
 
   function spawn(ent) {
@@ -192,7 +192,7 @@ export default function Game({ onReturnToMenu }) {
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
     // Clear
-    ctx.fillStyle = '#0f0f14';
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-primary')?.trim() || '#141821';
     ctx.fillRect(0, 0, cam.w, cam.h);
 
     // Render world tiles and objects
@@ -209,7 +209,7 @@ export default function Game({ onReturnToMenu }) {
     const lights = [
       ...player.getLightSources(cam),
       ...world.braziers.filter(b => b.lit).map(b => ({
-        x: Math.floor(b.x - cam.x + 5), y: Math.floor(b.y - cam.y + 2), r: 50, strength: 0.78, color: 'rgba(255,210,150,0.10)'
+        x: Math.floor(b.x - cam.x + 5), y: Math.floor(b.y - cam.y + 2), r: 54, strength: 0.8, color: 'rgba(255,220,170,0.12)'
       }))
     ];
     renderLighting(ctx, cam.w, cam.h, lights, state.settings.darkness);
@@ -234,7 +234,7 @@ export default function Game({ onReturnToMenu }) {
   };
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#0f0f14' }}>
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: 'var(--bg-primary)' }}>
       <canvas ref={canvasRef} style={{ display: 'block', outline: 'none' }} tabIndex={0} />
       {/* Overlay UI - separate React DOM */}
       <HUD state={state} />

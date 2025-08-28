@@ -13,7 +13,7 @@ export function FlameBar({ flame, maxFlame, colorPrimary = '#ff9900', colorAccen
   return (
     <div style={{ position: 'absolute', top: 10, left: 10, color: '#fff', fontFamily: 'monospace' }}>
       <div style={{ fontSize: 12, marginBottom: 4 }}>Flame</div>
-      <div style={{ width, height, border: '2px solid #2e2d32', background: '#2e2d32' }}>
+      <div style={{ width, height, border: '2px solid var(--border-color)', background: 'var(--border-color)' }}>
         <div style={{
           width: inner,
           height: height - 2,
@@ -32,8 +32,8 @@ export function HealthBar({ health, maxHealth }) {
   return (
     <div style={{ position: 'absolute', top: 40, left: 10 }}>
       <div style={{ fontSize: 12, marginBottom: 4, color: '#fff', fontFamily: 'monospace' }}>Health</div>
-      <div style={{ width, height, border: '2px solid #2e2d32', background: '#2e2d32' }}>
-        <div style={{ width: inner, height: height - 2, background: '#7ed957' }} />
+      <div style={{ width, height, border: '2px solid var(--border-color)', background: 'var(--border-color)' }}>
+        <div style={{ width: inner, height: height - 2, background: '#8af26a' }} />
       </div>
     </div>
   );
@@ -50,8 +50,8 @@ export function InventoryPanel({ inventory }) {
           <div key={name}
             title={name}
             style={{
-              width: 24, height: 24, border: '2px solid #2e2d32',
-              background: has ? '#ff9900' : '#2e2d32', color: '#fff',
+              width: 24, height: 24, border: '2px solid var(--border-color)',
+              background: has ? '#ff9900' : '#3a3a45', color: '#fff',
               fontFamily: 'monospace', fontSize: 10, display: 'flex',
               alignItems: 'center', justifyContent: 'center'
             }}>
@@ -75,8 +75,8 @@ export function MiniMap({ world, camera, scale = 2 }) {
   const ch = (camera.h / 16) * ratioY;
 
   return (
-    <div style={{ position: 'absolute', bottom: 10, right: 10, padding: 6, background: '#1c1b20aa', border: '2px solid #2e2d32' }}>
-      <div style={{ position: 'relative', width: w, height: h, background: '#0f0f14' }}>
+    <div style={{ position: 'absolute', bottom: 10, right: 10, padding: 6, background: 'rgba(29,34,48,0.85)', border: '2px solid var(--border-color)' }}>
+      <div style={{ position: 'relative', width: w, height: h, background: 'var(--bg-primary)' }}>
         <div style={{
           position: 'absolute',
           left: cx, top: cy, width: cw, height: ch, border: '1px solid #ffeea9'
@@ -173,14 +173,16 @@ export function SettingsMenu({ show, settings, onChange, onClose }) {
 }
 
 const modalStyle = {
-  position: 'absolute', inset: 0, background: '#00000088', display: 'flex',
+  position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex',
   alignItems: 'center', justifyContent: 'center'
 };
 const panelStyle = {
-  background: '#1c1b20', border: '2px solid #2e2d32', padding: 16, width: 320, textAlign: 'center'
+  background: 'var(--bg-secondary)', border: '2px solid var(--border-color)', padding: 16, width: 320, textAlign: 'center',
+  boxShadow: '0 6px 24px rgba(255,153,0,0.12)'
 };
 const btnStyle = {
-  background: '#ff9900', border: 'none', padding: '8px 12px', color: '#2e2d32', margin: 6, cursor: 'pointer'
+  background: '#ff9900', border: 'none', padding: '8px 12px', color: '#2e2d32', margin: 6, cursor: 'pointer',
+  boxShadow: '0 3px 10px rgba(255,153,0,0.25)'
 };
 const headingStyle = { color: '#ffeea9', marginTop: 0 };
 

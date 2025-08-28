@@ -23,10 +23,10 @@ export function renderTiles(ctx, world, camera) {
 
 export function renderBraziers(ctx, world, camera) {
   for (const b of world.braziers) {
-    ctx.fillStyle = b.lit ? '#ffb84d' : '#33323a';
+    ctx.fillStyle = b.lit ? '#ffb84d' : '#3a3943';
     ctx.fillRect(Math.floor(b.x - camera.x), Math.floor(b.y - camera.y), 10, 8);
     if (b.lit) {
-      ctx.fillStyle = '#ffeea9';
+      ctx.fillStyle = '#fff2bf';
       ctx.fillRect(Math.floor(b.x - camera.x + 3), Math.floor(b.y - camera.y - 6), 4, 6);
     }
   }
