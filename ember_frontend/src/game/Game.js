@@ -11,6 +11,7 @@ import Player from './entities/Player';
 import { createMote, createSeed } from './entities/Entities';
 import { renderTiles, renderBraziers } from './render/Renderer';
 import { saveGame, loadGame } from './core/Storage';
+import { SkillIndicatorBar } from './ui/OverlayUI';
 
 // PUBLIC_INTERFACE
 export default function Game({ onReturnToMenu }) {
@@ -258,6 +259,8 @@ export function HUD({ state }) {
     <>
       <FlameBar flame={player.flame} maxFlame={player.maxFlame} />
       <HealthBar health={player.health} maxHealth={player.maxHealth} recentDamageTime={player.recentDamageTime || 0} />
+      {/* Metroidvania-style skill indicator strip */}
+      <SkillIndicatorBar player={player} />
       <InventoryPanel inventory={inventory} />
       <MiniMap world={world} camera={world.camera} />
     </>

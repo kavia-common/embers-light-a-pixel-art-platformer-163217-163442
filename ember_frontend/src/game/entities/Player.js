@@ -54,6 +54,19 @@ export default class Player {
       flameCloak: false,
     };
 
+    // NEW: Progression subsystem state to track milestones and boss flags
+    this.progression = {
+      litCount: 0,
+      milestones: {
+        firstLight: false,   // first brazier
+        duskPath: false,     // 3 braziers
+        emberAscend: false,  // 5 braziers
+      },
+      bosses: {
+        wardenMote: false,   // sample boss flag for future use
+      }
+    };
+
     // Platformer advanced move state
     this.freeMove = false; // platformer mode enabled
     this.wallSlide = false;
@@ -139,7 +152,7 @@ export default class Player {
             b.lit = true;
             this.flame = clamp(this.flame + 50, 0, this.maxFlame);
             systems.audio.playSfx('ignite');
-            this._maybeUnlockAbility(world, systems);
+            this._onMilestoneUpdate(world, systems); // update progression counts and unlocks
           }
         } else {
           this.flame = clamp(this.flame + 10 * dt, 0, this.maxFlame);
@@ -405,11 +418,38 @@ export default class Player {
 
   /**
    * PUBLIC_INTERFACE
+   * Progression: call after lighting a brazier or defeating a boss to update unlocks.
+   */
+  _onMilestoneUpdate(world, systems) {
+    /** Updates lit counts, milestone flags, and unlocks abilities in sequence. */
+    const newLit = world.braziers.filter(b => b.lit).length;
+    if (newLit !== this.progression.litCount) {
+      this.progression.litCount = newLit;
+    }
+
+    // Track milestone flags so we can use them for UI pings or save hooks later
+    if (!this.progression.milestones.firstLight && this.progression.litCount >= 1) {
+      this.progression.milestones.firstLight = true;
+    }
+    if (!this.progression.milestones.duskPath && this.progression.litCount >= 3) {
+      this.progression.milestones.duskPath = true;
+    }
+    if (!this.progression.milestones.emberAscend && this.progression.litCount >= 5) {
+      this.progression.milestones.emberAscend = true;
+    }
+
+    // Unlock abilities in a Metroidvania cadence
+    this._maybeUnlockAbility(world, systems);
+  }
+
+  /**
+   * PUBLIC_INTERFACE
    * Ability unlocking rule-of-thumb: based on number of lit braziers.
    */
   _maybeUnlockAbility(world, systems) {
     /** Unlocks moves gradually: dash -> wallJump -> doubleJump */
-    const litCount = world.braziers.filter(b => b.lit).length;
+    const litCount = this.progression?.litCount || world.braziers.filter(b => b.lit).length;
+
     if (!this.abilities.dash && litCount >= 1) {
       this.abilities.dash = true;
       systems.audio.playSfx('powerup');

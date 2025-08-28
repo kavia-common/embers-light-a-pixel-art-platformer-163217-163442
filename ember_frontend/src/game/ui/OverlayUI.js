@@ -79,6 +79,40 @@ export function InventoryPanel({ inventory }) {
 }
 
 // PUBLIC_INTERFACE
+export function SkillIndicatorBar({ player }) {
+  /** Metroidvania-style skill indicator strip under the health bar. */
+  const items = [
+    { key: 'dash', label: 'Dash' },
+    { key: 'wallJump', label: 'Wall' },
+    { key: 'doubleJump', label: '2xJ' },
+    { key: 'melee', label: 'Nail' }
+  ];
+  return (
+    <div style={{ position: 'absolute', top: 62, left: 10, display: 'flex', gap: 6 }}>
+      {items.map(it => {
+        const unlocked = !!player.abilities?.[it.key];
+        return (
+          <div key={it.key}
+            title={`${it.label} ${unlocked ? 'Unlocked' : 'Locked'}`}
+            style={{
+              width: 28, height: 14,
+              border: '2px solid var(--border-color)',
+              background: unlocked ? '#1d2230' : '#2a2f3f',
+              color: unlocked ? '#ffeea9' : '#6d6f7a',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'monospace', fontSize: 9,
+              boxShadow: unlocked ? '0 0 10px rgba(255,153,0,0.25) inset' : 'none'
+            }}
+          >
+            {it.label}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// PUBLIC_INTERFACE
 export function MiniMap({ world, camera, scale = 2 }) {
   /** Very small world mini-map representation. */
   const w = 120, h = 60;
