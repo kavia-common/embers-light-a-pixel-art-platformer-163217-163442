@@ -144,18 +144,25 @@ export default class Player {
       }
     };
 
-    // Interaction with braziers (restore flame and progression unlocks)
+    // Interaction with braziers (restore flame, set save point, and progression unlocks)
     for (const b of world.braziers) {
       if (Math.abs(this.x - b.x) < TILE && Math.abs(this.y - b.y) < TILE) {
+        // touching a brazier: acts as a bench/save
+        // set respawn point just above brazier
+        this.lastSave = { brazierId: b.id, x: b.x, y: b.y - 10 };
+        // light it if unlit, and grant a bigger heal burst
         if (!b.lit) {
           if (this._nearIgnitionPoint(b)) {
             b.lit = true;
             this.flame = clamp(this.flame + 50, 0, this.maxFlame);
+            this.health = clamp(this.health + 30, 0, this.maxHealth);
             systems.audio.playSfx('ignite');
             this._onMilestoneUpdate(world, systems); // update progression counts and unlocks
           }
         } else {
+          // resting at lit brazier: slow regen
           this.flame = clamp(this.flame + 10 * dt, 0, this.maxFlame);
+          this.health = clamp(this.health + 6 * dt, 0, this.maxHealth);
         }
       }
     }

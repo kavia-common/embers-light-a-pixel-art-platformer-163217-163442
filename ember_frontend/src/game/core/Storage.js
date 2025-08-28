@@ -1,4 +1,4 @@
-//
+﻿//
 // Storage.js - handles save/load with localStorage
 //
 const SAVE_KEY = 'ember_save_v1';
@@ -11,18 +11,20 @@ function safeParse(json) {
 export function saveGame(state) {
   /** Save minimal game state snapshot to localStorage. */
   const snapshot = {
-    version: 1,
+    version: 2,
     player: {
       x: state.player.x,
       y: state.player.y,
       health: state.player.health,
       flame: state.player.flame,
       upgrades: state.player.upgrades,
+      lastSave: state.player.lastSave || null, // brazier respawn point
     },
     world: {
       unlockedNodes: state.world.unlockedNodes,
       currentBiome: state.world.currentBiome,
-      braziers: state.world.braziers,
+      braziers: state.world.braziers.map(b => ({ id: b.id, x: b.x, y: b.y, lit: b.lit })),
+      lostFlame: state.world.lostFlame || null, // dropped reclaimable resource
     },
     inventory: state.inventory,
     settings: state.settings,

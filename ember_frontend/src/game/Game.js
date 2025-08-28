@@ -9,7 +9,7 @@ import { renderLighting } from './core/Lighting';
 import { createInitialWorld } from './world/World';
 import Player from './entities/Player';
 import { createMote, createSeed } from './entities/Entities';
-import { renderTiles, renderBraziers } from './render/Renderer';
+import { renderTiles, renderBraziers, renderLostFlame } from './render/Renderer';
 import { saveGame, loadGame } from './core/Storage';
 import { SkillIndicatorBar } from './ui/OverlayUI';
 
@@ -37,12 +37,19 @@ export default function Game({ onReturnToMenu }) {
       player.health = snap.player.health ?? player.health;
       player.flame = snap.player.flame ?? player.flame;
       player.upgrades = { ...player.upgrades, ...(snap.player.upgrades || {}) };
+      // load last save brazier if any
+      player.lastSave = snap.player.lastSave || null;
+
       world.unlockedNodes = snap.world.unlockedNodes || world.unlockedNodes;
       world.currentBiome = snap.world.currentBiome || world.currentBiome;
       world.braziers = world.braziers.map(b => {
         const saved = (snap.world.braziers || []).find(x => x.id === b.id);
         return saved ? { ...b, lit: saved.lit } : b;
       });
+      // restore lost flame pickup
+      if (snap.world.lostFlame) {
+        world.lostFlame = { ...snap.world.lostFlame };
+      }
     }
 
     // Entities
@@ -142,6 +149,41 @@ export default function Game({ onReturnToMenu }) {
     // Update player and entities
     player.update(dt, input, world, { audio, entities, spawn });
 
+    // Check reclaim of lost flame if present
+    if (state.world.lostFlame) {
+      const lf = state.world.lostFlame;
+      const dx = (player.x + player.w / 2) - lf.x;
+      const dy = (player.y + player.h / 2) - lf.y;
+      if (dx * dx + dy * dy < 20 * 20) {
+        // reclaim
+        player.flame = Math.min(player.maxFlame, player.flame + (lf.amount || 0));
+        state.world.lostFlame = null;
+        audio.playSfx('ignite');
+      }
+    }
+
+    // Handle player death and respawn
+    if (player.health <= 0) {
+      // drop lost flame if not already dropped this life
+      if (!state.world.lostFlame) {
+        state.world.lostFlame = {
+          x: player.x + player.w / 2,
+          y: player.y + player.h / 2,
+          amount: Math.floor(player.maxFlame * 0.5) // 50% flame recoverable
+        };
+      }
+      // respawn at last save brazier or default start
+      const fallback = { x: 3 * 16, y: (world.tiles.height - 6) * 16 };
+      const save = player.lastSave || null;
+      const dest = save ? { x: save.x, y: save.y } : fallback;
+      player.x = dest.x;
+      player.y = dest.y;
+      player.vx = 0; player.vy = 0;
+      player.health = Math.floor(player.maxHealth * 0.6); // partial health on respawn
+      player.flame = Math.floor(player.maxFlame * 0.6);   // partial flame; remainder reclaimable
+      audio.playSfx('hurt');
+    }
+
     // Update enemies and projectiles
     for (const e of entities) {
       if (e.type === 'mote') e.update(dt, player, world);
@@ -166,12 +208,13 @@ export default function Game({ onReturnToMenu }) {
     if (accRef.current > 5) {
       saveGame({
         player: {
-          x: player.x, y: player.y, health: player.health, flame: player.flame, upgrades: player.upgrades
+          x: player.x, y: player.y, health: player.health, flame: player.flame, upgrades: player.upgrades, lastSave: player.lastSave
         },
         world: {
           unlockedNodes: state.world.unlockedNodes,
           currentBiome: state.world.currentBiome,
-          braziers: state.world.braziers.map(b => ({ id: b.id, lit: b.lit }))
+          braziers: state.world.braziers.map(b => ({ id: b.id, x: b.x, y: b.y, lit: b.lit })),
+          lostFlame: state.world.lostFlame
         },
         inventory: state.inventory,
         settings: state.settings
@@ -199,6 +242,7 @@ export default function Game({ onReturnToMenu }) {
     // Render world tiles and objects
     renderTiles(ctx, world, cam);
     renderBraziers(ctx, world, cam);
+    renderLostFlame(ctx, world, cam);
 
     // Render entities
     for (const e of entities) {
@@ -211,7 +255,10 @@ export default function Game({ onReturnToMenu }) {
       ...player.getLightSources(cam),
       ...world.braziers.filter(b => b.lit).map(b => ({
         x: Math.floor(b.x - cam.x + 5), y: Math.floor(b.y - cam.y + 2), r: 54, strength: 0.8, color: 'rgba(255,220,170,0.12)'
-      }))
+      })),
+      ...(world.lostFlame ? [{
+        x: Math.floor(world.lostFlame.x - cam.x), y: Math.floor(world.lostFlame.y - cam.y), r: 36, strength: 0.7, color: 'rgba(255,230,180,0.08)'
+      }] : [])
     ];
     renderLighting(ctx, cam.w, cam.h, lights, state.settings.darkness);
 

@@ -239,6 +239,9 @@ export function createInitialWorld() {
     // Biome tracking and traversal
     currentBiome: 'Ruined Lowlands',
     unlockedNodes: ['Ruined Lowlands'],
+
+    // Lost resource marker (reclaimable on return)
+    lostFlame: null,
   };
 
   /**
