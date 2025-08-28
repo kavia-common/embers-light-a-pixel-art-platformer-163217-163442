@@ -11,7 +11,7 @@ function aabb(ax, ay, aw, ah, bx, by, bw, bh) {
 
 // PUBLIC_INTERFACE
 export function createMote(x, y) {
-  /** Create a simple enemy that seeks the player, can be hit/knocked back, and deals contact damage. */
+  /** Create a simple enemy that seeks the player, can be hit/knocked back, shows hit flash, and deals contact damage. */
   return {
     type: 'mote',
     x, y,
@@ -22,36 +22,55 @@ export function createMote(x, y) {
     contactDamage: 8,
     contactCooldown: 0.6,
     _contactTimer: 0,
+    // reactive feedback
+    hitFlash: 0,          // seconds remaining of white flash
+    stunTime: 0,          // brief pause after being hit
+    aggro: true,
 
     update(dt, player) {
       this.aiTime += dt;
+
+      // decay timers
+      if (this.hitFlash > 0) this.hitFlash = Math.max(0, this.hitFlash - dt);
+      if (this.stunTime > 0) this.stunTime = Math.max(0, this.stunTime - dt);
 
       // simple damping to settle knockback
       this.vx *= 0.98;
       this.vy *= 0.98;
 
-      // float towards player slowly, avoid light if player is bright
-      const speed = player.dimmed ? 60 : 40;
-      const dx = player.x - this.x;
-      const dy = player.y - this.y;
-      const len = Math.hypot(dx, dy) || 1;
-      // steer a little rather than fully override to allow knockback
-      this.vx += ((dx / len) * speed - this.vx) * 0.05;
-      this.vy += (((dy / len) * speed * 0.4 + Math.sin(this.aiTime * 3) * 10) - this.vy) * 0.05;
+      // AI steering if not stunned
+      if (this.stunTime <= 0) {
+        const speed = player.dimmed ? 60 : 40;
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const len = Math.hypot(dx, dy) || 1;
+        // steer a little rather than fully override to allow knockback
+        this.vx += ((dx / len) * speed - this.vx) * 0.05;
+        this.vy += (((dy / len) * speed * 0.4 + Math.sin(this.aiTime * 3) * 10) - this.vy) * 0.05;
+      }
 
       this.x += this.vx * dt;
       this.y += this.vy * dt;
 
-      // Handle contact damage with a small cooldown
+      // Handle contact damage with a small cooldown (respect player i-frames)
       if (this._contactTimer > 0) this._contactTimer -= dt;
       if (aabb(this.x, this.y, this.w, this.h, player.x, player.y, player.w, player.h)) {
         if (this._contactTimer <= 0) {
           if (typeof player.takeDamage === 'function') {
-            player.takeDamage(this.contactDamage, { source: 'mote', knockback: { x: Math.sign(dx), y: -0.4 } });
+            player.takeDamage(this.contactDamage, { source: 'mote', knockback: { x: Math.sign(player.x - this.x), y: -0.4 } });
           }
           this._contactTimer = this.contactCooldown;
         }
       }
+    },
+
+    // PUBLIC_INTERFACE
+    onHit(dmg, dir = 0) {
+      /** Reaction when taking a hit: flash white and tiny stun. */
+      this.hitFlash = 0.08;
+      this.stunTime = 0.06;
+      // Knockback already applied by attacker; ensure slight push
+      this.vx += (dir || 0) * 20;
     },
 
     render(ctx, camera) {
@@ -59,8 +78,16 @@ export function createMote(x, y) {
       ctx.translate(-camera.x, -camera.y);
       // tint darker when low hp
       const hpPct = Math.max(0, Math.min(1, this.hp / 60));
-      ctx.fillStyle = hpPct < 0.35 ? '#2b3347' : '#202634';
+      let base = hpPct < 0.35 ? '#2b3347' : '#202634';
+      if (this.hitFlash > 0) base = '#e8eefc'; // hit flash
+      ctx.fillStyle = base;
       ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.w, this.h);
+
+      // simple hit spark indicator (tiny pixel) for feedback
+      if (this.hitFlash > 0) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(Math.floor(this.x + this.w / 2), Math.floor(this.y + this.h / 2), 1, 1);
+      }
       ctx.restore();
     }
   };

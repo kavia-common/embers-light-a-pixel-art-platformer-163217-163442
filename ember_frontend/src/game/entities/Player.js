@@ -1,5 +1,7 @@
 ﻿//
+//
 // Player.js - Ember player character (revamped movement/combat & progression)
+//
 //
 import { clamp, approach } from '../core/MathUtils';
 import { stepPhysics, TILE, collidesWithTiles } from '../core/Physics';
@@ -27,16 +29,16 @@ export default class Player {
     this.maxHealth = 100;
     this.health = 100;
 
-    // Damage and invulnerability state
+    // Damage and invulnerability state (i-frames)
     this.invulnTime = 0;
     this.invulnDuration = 0.5;
     this.recentDamageTime = 0;
-    this._hurtBlink = false;
 
     // States
     this.dimmed = false; // stealth
     this.ignitedObjects = new Set();
     this.cooldowns = { burst: 0, seed: 0, dash: 0, melee: 0 };
+
     // Ability progression flags (unlock as you progress)
     this.abilities = {
       dash: false,
@@ -53,7 +55,7 @@ export default class Player {
     };
 
     // Platformer advanced move state
-    this.freeMove = false; // switch to platformer by default for Hollow Knight feel
+    this.freeMove = false; // platformer mode enabled
     this.wallSlide = false;
     this.wallDir = 0; // -1 left, 1 right
     this.doubleJumpUsed = false;
@@ -82,22 +84,26 @@ export default class Player {
     if (this.invulnTime > 0) this.invulnTime = Math.max(0, this.invulnTime - dt);
     if (this.recentDamageTime > 0) this.recentDamageTime = Math.max(0, this.recentDamageTime - dt);
 
-    // Diminish combo timer
+    // Combo windows diminish
     if (this.meleeComboTimer > 0) this.meleeComboTimer = Math.max(0, this.meleeComboTimer - dt);
     if (this.meleeActiveTime > 0) this.meleeActiveTime = Math.max(0, this.meleeActiveTime - dt);
 
     // Dim/stealth
     this.dimmed = input.isDown('dim');
 
-    // Abilities (existing)
+    // Abilities (spells and melee)
     if (input.wasPressed('burst') && this.cooldowns.burst === 0) {
-      this._flameBurst(world, systems);
+      // If dash unlocked and moving, treat burst as dash request for HK-like flow
+      const movingDir = (input.isDown('left') ? -1 : 0) + (input.isDown('right') ? 1 : 0);
+      if (this.abilities.dash && (movingDir !== 0 || this.dashTime <= 0) && this.cooldowns.dash === 0) {
+        this._requestDash = true;
+      } else {
+        this._flameBurst(world, systems);
+      }
     }
     if (input.wasPressed('seed') && this.cooldowns.seed === 0) {
       this._fireSeed(world, systems);
     }
-
-    // New: Melee attack (use 'interact' as attack key to avoid adding new bindings)
     if (this.abilities.melee && input.wasPressed('interact') && this.cooldowns.melee === 0) {
       this._meleeAttack(systems, world);
     }
@@ -119,13 +125,13 @@ export default class Player {
         this.flame = clamp(this.flame - hz.dps * factor * dt, 0, this.maxFlame);
       }
     };
-    this.onDarknessTick = (hz) => {
+    this.onDarknessTick = () => {
       if (this.dimmed) {
         this.flame = clamp(this.flame - 2 * dt, 0, this.maxFlame);
       }
     };
 
-    // Interaction with braziers (restore flame)
+    // Interaction with braziers (restore flame and progression unlocks)
     for (const b of world.braziers) {
       if (Math.abs(this.x - b.x) < TILE && Math.abs(this.y - b.y) < TILE) {
         if (!b.lit) {
@@ -133,7 +139,6 @@ export default class Player {
             b.lit = true;
             this.flame = clamp(this.flame + 50, 0, this.maxFlame);
             systems.audio.playSfx('ignite');
-            // Example: unlock progression via brazier milestones
             this._maybeUnlockAbility(world, systems);
           }
         } else {
@@ -154,7 +159,7 @@ export default class Player {
   }
 
   /**
-   * Advanced platformer movement: dash, wall slide/jump, double jump.
+   * Advanced platformer movement: dash, wall slide/jump, double jump, variable jump.
    */
   _updatePlatformerAdvanced(dt, input, world, systems) {
     const accel = 2400;
@@ -167,41 +172,43 @@ export default class Player {
     const hor = (left ? -1 : 0) + (right ? 1 : 0);
     if (hor !== 0) this.facing = hor;
 
-    // Dash (press burst key J as dash to keep bindings familiar)
-    if (this.abilities.dash && input.wasPressed('burst') && this.cooldowns.dash === 0) {
+    // Dash request handling
+    if (this.abilities.dash && this._requestDash && this.cooldowns.dash === 0) {
+      this._requestDash = false;
       this.dashTime = this.dashDuration;
       this.dashDir = hor !== 0 ? hor : this.facing;
-      this.cooldowns.dash = 0.45; // short cooldown
+      this.cooldowns.dash = 0.45;
       systems.audio.playSfx('dash');
+    } else {
+      this._requestDash = false;
     }
 
-    // On dash: strong horizontal speed, reduced gravity effect
+    // During dash: keep horizontal speed and damp vertical; grant brief i-frames
     if (this.dashTime > 0) {
       this.dashTime -= dt;
       this.vx = this.dashDir * this.dashSpeed;
-      // lower gravity effect during dash
       this.vy = approach(this.vy, 0, 1800 * dt);
+      this.invulnTime = Math.max(this.invulnTime, 0.05);
     } else {
       // Normal horizontal acceleration
       if (hor !== 0) {
         this.vx = approach(this.vx, hor * maxSpeed, accel * dt);
-      } else {
-        // friction handled in stepPhysics
       }
+      // else friction handled by stepPhysics
     }
 
-    // Jump buffer set
+    // Jump buffer
     if (input.wasPressed('jump')) {
       this.jumpBuffer = 0.15;
     }
 
-    // Check wall contact for slide
+    // Wall contact
     const tiles = world.tiles;
     const touchingLeft = collidesWithTiles(this.x - 1, this.y, this.w, this.h, tiles);
     const touchingRight = collidesWithTiles(this.x + 1, this.y, this.w, this.h, tiles);
     this.wallDir = touchingLeft ? -1 : (touchingRight ? 1 : 0);
 
-    // Perform jump: ground, coyote, or wall jump
+    // Jump options
     const canGroundJump = (this.onGround || this.coyote > 0) && this.jumpBuffer > 0;
     const canWallJump = this.abilities.wallJump && this.wallDir !== 0 && this.jumpBuffer > 0 && !this.onGround;
     const canDoubleJump = this.abilities.doubleJump && !this.doubleJumpUsed && this.jumpBuffer > 0 && !this.onGround && !canWallJump;
@@ -209,11 +216,10 @@ export default class Player {
     if (canGroundJump || canWallJump || canDoubleJump) {
       this.vy = jumpVel;
       if (canWallJump) {
-        // Push opposite of wall
-        this.vx = 200 * -this.wallDir;
+        this.vx = 200 * -this.wallDir; // push off wall
+        this.invulnTime = Math.max(this.invulnTime, 0.02);
       }
       if (!this.onGround && !canWallJump) {
-        // consume double jump
         this.doubleJumpUsed = true;
       } else {
         this.doubleJumpUsed = false;
@@ -224,22 +230,22 @@ export default class Player {
       systems.audio.playSfx('jump');
     }
 
-    // Wall slide: slow descent when against wall and holding towards it
+    // Wall slide
     this.wallSlide = false;
     if (!this.onGround && this.wallDir !== 0 && hor === this.wallDir && this.vy > 0) {
       this.wallSlide = true;
-      this.vy = Math.min(this.vy, 80); // clamp fall speed while sliding
+      this.vy = Math.min(this.vy, 80);
     }
 
-    // Early jump cut for variable jump height
+    // Variable jump height
     if (!input.isDown('jump') && this.vy < -160) {
       this.vy = -160;
     }
 
-    // Integrate physics
+    // Integrate physics/collisions
     stepPhysics(this, dt, world);
 
-    // Reset states based on landing
+    // Reset landing states
     if (this.onGround) {
       this.doubleJumpUsed = false;
     }
@@ -306,7 +312,7 @@ export default class Player {
     this.onGround = false;
   }
 
-  _applyFlameDecay(dt, world) {
+  _applyFlameDecay(dt) {
     let decay = this.dimmed ? 1.0 : 2.0;
     if (this.upgrades.everbrightCoal) decay *= 0.6;
     this.flame = clamp(this.flame - decay * dt, 0, this.maxFlame);
@@ -335,7 +341,10 @@ export default class Player {
     for (const e of systems.entities) {
       if (e.type === 'mote') {
         const dx = e.x - this.x, dy = e.y - this.y;
-        if (dx * dx + dy * dy < radius * radius) e.hp -= 50;
+        if (dx * dx + dy * dy < radius * radius) {
+          e.hp -= 50;
+          if (typeof e.onHit === 'function') e.onHit(50, Math.sign(e.x - this.x));
+        }
       }
     }
   }
@@ -360,7 +369,7 @@ export default class Player {
    * PUBLIC_INTERFACE
    * Perform a short-range melee slash with a 3-hit combo window.
    */
-  _meleeAttack(systems, world) {
+  _meleeAttack(systems) {
     /** Executes a melee attack; chains up to 3 hits if timed. */
     const comboMax = 3;
     // Determine combo index
@@ -387,6 +396,7 @@ export default class Player {
           // brief knockback
           if (e.vx !== undefined) e.vx += this.facing * 60;
           if (e.vy !== undefined) e.vy -= 40;
+          if (typeof e.onHit === 'function') e.onHit(dmg, this.facing);
         }
       }
     }
@@ -449,7 +459,7 @@ export default class Player {
       ctx.fillRect(Math.floor(this.x + (this.facing > 0 ? 6 : 2)), Math.floor(this.y + 4), 2, 2);
     }
 
-    // Optional: draw melee hitbox briefly for feedback
+    // Optional: draw melee hitbox briefly for feedback plus spark at tip
     if (this.meleeActiveTime > 0) {
       const rangeX = 14 + this.meleeComboIndex * 4;
       const rangeY = 10;
@@ -457,6 +467,10 @@ export default class Player {
       const boxY = this.y + 2;
       ctx.fillStyle = 'rgba(255,230,180,0.25)';
       ctx.fillRect(Math.floor(boxX), Math.floor(boxY), rangeX, rangeY);
+      // small hit spark pixel near the tip
+      const sparkX = this.facing > 0 ? boxX + rangeX - 2 : boxX + 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillRect(Math.floor(sparkX), Math.floor(boxY + rangeY / 2), 1, 1);
     }
 
     ctx.restore();
